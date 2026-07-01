@@ -1,0 +1,78 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribuciones y empaquetados
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/
+pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==========================================
+# ENTORNO VIRTUAL (¡Súper importante!)
+# ==========================================
+# Bloquea los nombres más comunes de entornos virtuales
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ==========================================
+# CONFIGURACIONES Y LLAVES (Seguridad)
+# ==========================================
+# Aquí va el archivo donde guardas tu SECRET_KEY y credenciales de BD
+.env
+.local.env
+db.env
+*.env
+!.env.example
+
+# Editor de código (por si usas VS Code o PyCharm en Linux)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==========================================
+# BASE DE DATOS (Local)
+# ==========================================
+# Si estás usando SQLite para pruebas locales antes de pasar a PostgreSQL
+*.sqlite3
+*.sqlite3-journal
+
+# Logs y reportes
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Carpetas de Media (Archivos que suben los usuarios en pruebas)
+media/
+# Si quieres ignorar los archivos de media pero mantener la carpeta:
+# media/*
+# !media/.gitkeep
