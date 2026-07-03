@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.transit_general.apps.TransitGeneralConfig',
     'apps.routes_map.apps.RoutesMapConfig',
     'apps.scheduler.apps.SchedulerConfig',
+    'apps.usuarios.apps.UsuariosConfig',
     
 ]
 
@@ -161,3 +162,5 @@ if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
 # 3. Configuramos las rutas explícitas de GeoDjango
 GEOS_LIBRARY_PATH = os.path.join(OSGEO4W_BIN, "geos_c.dll")
 GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_BIN, "gdal313.dll") # 👈 Tu archivo exacto
+
+AUTH_USER_MODEL = 'usuarios.Usuario'
