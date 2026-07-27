@@ -1,5 +1,7 @@
-from django.db import models
+# apps/routes_map/models.py
+from django.contrib.gis.db import models 
 from apps.transit_general.models import Agencia
+
 
 class Ruta(models.Model):
     route_id = models.CharField(max_length=50, primary_key=True)
@@ -8,26 +10,38 @@ class Ruta(models.Model):
     route_long_name = models.CharField(max_length=150)
     route_type = models.IntegerField(default=3, help_text="3 significa Autobús/Combi en el estándar GTFS")
 
+
+
     def __str__(self):
         return f"{self.route_short_name} - {self.route_long_name}"
+
 
 class Parada(models.Model):
     stop_id = models.CharField(max_length=50, primary_key=True)
     stop_name = models.CharField(max_length=150)
-    # Reemplazo temporal de GeoDjango (PostGIS) a Flotantes normales para Windows:
-    stop_lat = models.FloatField(help_text="Latitud geográfica")
-    stop_lon = models.FloatField(help_text="Longitud geográfica")
+    
+ 
+    location = models.PointField(srid=4326, help_text="Ubicación geográfica (Punto en PostGIS)")
 
     def __str__(self):
         return self.stop_name
 
 class TrazadoRuta(models.Model):
-    """
-    Guarda los puntos finos de las calles para dibujar las curvas en el mapa (shapes.txt).
-    Como no tenemos LineStringField activo, usamos texto largo para meter un JSON de coordenadas.
-    """
     shape_id = models.CharField(max_length=50, primary_key=True)
-    coordenadas_json = models.TextField(help_text="Lista de latitudes y longitudes en formato JSON string")
+    ruta = models.ForeignKey(Ruta, on_delete=models.CASCADE, related_name="trazados", null=True, blank=True)
+    
+   
+    direccion = models.IntegerField(default=0, choices=[(0, 'Ida'), (1, 'Vuelta')])
+    
+   
+    duracion_estimada_min = models.PositiveIntegerField(
+        default=30, 
+        help_text="Duración total del recorrido en minutos. Sirve para calcular la hora fin en stop_times.txt"
+    )
+    
+   
+    geometria = models.LineStringField(srid=4326, help_text="Línea de la ruta (LineString)")
 
     def __str__(self):
-        return f"Trazado {self.shape_id}"
+        dir_text = "Ida" if self.direccion == 0 else "Vuelta"
+        return f"{self.shape_id} - {self.ruta.route_short_name if self.ruta else ''} ({dir_text})"

@@ -144,23 +144,23 @@ USE_TZ = True
 STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
 
-# core/settings.py (Hasta el final de todo tu archivo)
+# core/settings.py
 import os
 import sys
 
-OSGEO4W_ROOT = r"C:\OSGeo4W"
-OSGEO4W_BIN = os.path.join(OSGEO4W_ROOT, "bin")
 
-# 1. Agregamos la ruta al sistema operativo
-os.environ["PATH"] = OSGEO4W_BIN + os.pathsep + os.environ["PATH"]
+# ⚡ CONFIGURACIÓN EXCLUSIVA PARA WINDOWS ⚡
+if sys.platform == "win32":
+    OSGEO4W_ROOT = r"C:\OSGeo4W"
+    OSGEO4W_BIN = os.path.join(OSGEO4W_ROOT, "bin")
 
-# 2. ⚡ TRUCO VITAL PARA PYTHON RECIENTE EN WINDOWS ⚡
-# Le dice a Python explícitamente que permita cargar dependencias de esta carpeta
-if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
-    os.add_dll_directory(OSGEO4W_BIN)
+    # 1. Agregamos la ruta al sistema operativo
+    os.environ["PATH"] = OSGEO4W_BIN + os.pathsep + os.environ["PATH"]
 
-# 3. Configuramos las rutas explícitas de GeoDjango
-GEOS_LIBRARY_PATH = os.path.join(OSGEO4W_BIN, "geos_c.dll")
-GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_BIN, "gdal313.dll") # 👈 Tu archivo exacto
+    # 2. Le dice a Python que permita cargar dependencias de esta carpeta
+    if hasattr(os, "add_dll_directory"):
+        os.add_dll_directory(OSGEO4W_BIN)
 
+
+# Modelo de usuario personalizado (Aplica para todos los sistemas)
 AUTH_USER_MODEL = 'usuarios.Usuario'
