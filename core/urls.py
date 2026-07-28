@@ -29,4 +29,5 @@ urlpatterns = [
     path('api/transit/', include('apps.transit_general.urls')),
     path('api/maps/', include('apps.routes_map.urls')),       
     path('api/schedule/', include('apps.scheduler.urls')),
+    path('api/auth/', include('apps.usuarios.urls')),
 ]
