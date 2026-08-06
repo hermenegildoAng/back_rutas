@@ -94,3 +94,42 @@ def recuperar_password_view(request):
     if existe:
         return Response({"msg": f"Se ha enviado un enlace de recuperación al correo: {email}"}, status=status.HTTP_200_OK)
     return Response({"error": "No encontramos ningún usuario con ese correo electrónico."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# 6. MÓDULO ADMINISTRATIVO: Listar todos los usuarios y Registrar uno nuevo
+class UsuarioListCreateView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Devuelve todos los usuarios ordenados por el más reciente
+        usuarios = UsuarioActual.objects.all().order_by('-id')
+        serializer = UsuarioSerializer(usuarios, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        # Usa RegistroSerializer para crear y encriptar la clave temporal automáticamente
+        serializer = RegistroSerializer(data=request.data)
+        if serializer.is_valid():
+            usuario = serializer.save()
+            # Retornamos los datos completos del usuario con UsuarioSerializer para que el Front los agregue a la lista
+            data_response = UsuarioSerializer(usuario).data
+            return Response(data_response, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 7. MÓDULO ADMINISTRATIVO: Editar/Cambiar estado (Activo/Inactivo) de un usuario específico
+class UsuarioDetailView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, pk):
+        try:
+            usuario = UsuarioActual.objects.get(pk=pk)
+        except UsuarioActual.DoesNotExist:
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Actualización parcial (ideal para cambiar el booleano 'activo')
+        serializer = UsuarioSerializer(usuario, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

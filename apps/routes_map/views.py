@@ -1,6 +1,7 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 from .models import Ruta, Parada, TrazadoRuta
-from .serializers import RutaSerializer, ParadaSerializer, TrazadoRutaSerializer
+from .serializers import RutaSerializer, ParadaSerializer, TrazadoRutaSerializer, RutaGTFSCompletaSerializer
 
 class RutaViewSet(viewsets.ModelViewSet):
     queryset = Ruta.objects.all()
@@ -27,3 +28,37 @@ class TrazadoRutaViewSet(viewsets.ModelViewSet):
         if ruta_id is not None:
             queryset = queryset.filter(ruta_id=ruta_id)
         return queryset
+
+
+class RutaGTFSViewSet(viewsets.ViewSet):
+    """
+    ViewSet personalizado para manejar la creación orquestada de una Ruta GTFS.
+    Endpoint principal: POST /api/rutas-gtfs/
+    """
+
+    def create(self, request):
+        
+        serializer = RutaGTFSCompletaSerializer(data=request.data)
+        
+       
+        if serializer.is_valid():
+            
+            resultado = serializer.save()
+            
+           
+            return Response(
+                {
+                    "status": "success",
+                    "data": resultado
+                }, 
+                status=status.HTTP_201_CREATED
+            )
+        
+      
+        return Response(
+            {
+                "status": "error",
+                "errores": serializer.errors
+            }, 
+            status=status.HTTP_400_BAD_REQUEST
+        )

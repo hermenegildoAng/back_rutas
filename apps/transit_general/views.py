@@ -1,5 +1,9 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from .models import Agencia, Calendario, TarifaAtributo, TarifaRegla
+from django.db.models import ProtectedError 
+from rest_framework.response import Response
+
+from django.db.utils import IntegrityError
 from .serializers import (
     AgenciaSerializer, 
     CalendarioSerializer, 
@@ -10,6 +14,22 @@ from .serializers import (
 class AgenciaViewSet(viewsets.ModelViewSet):
     queryset = Agencia.objects.all()
     serializer_class = AgenciaSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            agencia = self.get_object()
+            agencia.delete()
+            return Response(
+                {"mensaje": "Agencia eliminada correctamente."}, 
+                status=status.HTTP_200_OK
+            )
+        except (ProtectedError, IntegrityError):
+            return Response(
+                {
+                    "error": "No se puede eliminar la agencia porque tiene rutas o registros asociados. Elimina primero las relaciones."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class CalendarioViewSet(viewsets.ModelViewSet):
     queryset = Calendario.objects.all()
