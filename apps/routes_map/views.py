@@ -1,11 +1,17 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from .models import Ruta, Parada, TrazadoRuta
-from .serializers import RutaSerializer, ParadaSerializer, TrazadoRutaSerializer, RutaGTFSCompletaSerializer
+from .serializers import RutaSerializer, ParadaSerializer, TrazadoRutaSerializer, RutaGTFSCompletaSerializer, RutaDetalleGTFSSerializer
 
 class RutaViewSet(viewsets.ModelViewSet):
     queryset = Ruta.objects.all()
-    serializer_class = RutaSerializer
+
+    def get_serializer_class(self):
+        
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            return RutaDetalleGTFSSerializer
+        return RutaSerializer
 
 class ParadaViewSet(viewsets.ModelViewSet):
     queryset = Parada.objects.all()
@@ -62,3 +68,40 @@ class RutaGTFSViewSet(viewsets.ViewSet):
             }, 
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+    def update(self, request, pk=None):
+      print("Entró al update del ViewSet")
+
+      ruta = Ruta.objects.get(pk=pk)
+
+      serializer = RutaGTFSCompletaSerializer(
+          ruta,
+          data=request.data
+      )
+
+      print(serializer.is_valid())
+
+      if not serializer.is_valid():
+          print(serializer.errors)
+          return Response(serializer.errors, status=400)
+
+      print("Va a ejecutar save()")
+
+      resultado = serializer.save()
+
+      print("Terminó save()")
+
+      return Response({"status": "success", "data": resultado})
+
+      
+@api_view(['GET'])
+def detalle_ruta_gtfs_view(request, id_ruta):
+    try:
+        ruta = Ruta.objects.get(pk=id_ruta)
+        serializer = RutaDetalleGTFSSerializer(ruta)
+        return Response({
+            "status": "success",
+            "data": serializer.data
+        })
+    except Ruta.DoesNotExist:
+        return Response({"status": "error", "mensaje": "Ruta no encontrada"}, status=404)
