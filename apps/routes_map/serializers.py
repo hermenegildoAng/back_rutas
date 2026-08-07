@@ -12,7 +12,8 @@ from apps.scheduler.models import Viaje, TiempoParada
 
 class RutaSerializer(serializers.ModelSerializer):
    
-    agencia_nombre = serializers.ReadOnlyField(source='agency.agency_name', default=None)
+    
+    agency_id = serializers.ReadOnlyField(source='agency.agency_id', default=None)
 
     class Meta:
         model = Ruta
@@ -58,35 +59,40 @@ class RutaDetalleGTFSSerializer(serializers.ModelSerializer):
         } for t in obj.trazados.all()]
 
     def get_calendarios(self, obj):
-        
-        servicios = set(v.service for v in obj.viajes.all())
-        
+        servicios = {v.service for v in obj.viajes.all()}
+
         calendarios_list = []
+
         for s in servicios:
-            
-            viajes_del_servicio = obj.viajes.filter(service=s)
-            
-            
-            frecuencias_qs = Frecuencia.objects.filter(trip__in=viajes_del_servicio)
-            
+            viaje_ida = obj.viajes.filter(
+                service=s,
+                direction_id=0
+            ).first()
+
+            frecuencias_qs = viaje_ida.frecuencias.all() if viaje_ida else []
+
             calendarios_list.append({
-                'nombre': s.service_id.split('_')[-1] if s.service_id else 'General',
-                'lunes': s.monday,
-                'martes': s.tuesday,
-                'miercoles': s.wednesday,
-                'thursday': s.thursday, 
-                'jueves': s.thursday,
-                'viernes': s.friday,
-                'sabado': s.saturday,
-                'domingo': s.sunday,
-                'fecha_inicial': s.start_date,
-                'fecha_final': s.end_date,
-                'bloques': [{
-                    'desde': f.start_time,
-                    'hasta': f.end_time,
-                    'intervalo': f.headway_secs // 60
-                } for f in frecuencias_qs]
+                "nombre": s.service_id.split("_")[-1] if s.service_id else "General",
+                "lunes": s.monday,
+                "martes": s.tuesday,
+                "miercoles": s.wednesday,
+                "thursday": s.thursday,
+                "jueves": s.thursday,
+                "viernes": s.friday,
+                "sabado": s.saturday,
+                "domingo": s.sunday,
+                "fecha_inicial": s.start_date,
+                "fecha_final": s.end_date,
+                "bloques": [
+                    {
+                        "desde": f.start_time,
+                        "hasta": f.end_time,
+                        "intervalo": f.headway_secs // 60
+                    }
+                    for f in frecuencias_qs
+                ]
             })
+
         return calendarios_list
 
     def get_viaje_regreso(self, obj):
@@ -364,7 +370,19 @@ class RutaGTFSCompletaSerializer(serializers.Serializer):
 
             # 2. "WIPE": Borramos los elementos anteriores para evitar basura y duplicados
             instance.trazados.all().delete()
+
+           
+            calendarios_viejos = list(instance.viajes.values_list('service_id', flat=True))
+
+           
             instance.viajes.all().delete()
+
+            
+            Calendario.objects.filter(
+                id__in=calendarios_viejos
+            ).filter(
+                viajes__isnull=True
+            ).delete()
 
             # 3. Ejecutamos exactamente la misma lógica de guardado pero sobre la instancia existente
             return self._proceder_con_guardado(instance, validated_data)
@@ -499,9 +517,9 @@ class RutaGTFSCompletaSerializer(serializers.Serializer):
                         end_time=bloque['hasta'],
                         headway_secs=bloque['intervalo'] * 60
                     )
-        '''
+        
         return {
             "ruta_id": ruta.id,
             "mensaje": "Operación realizada con éxito."
-        }'''
-        return ruta
+        }
+        
